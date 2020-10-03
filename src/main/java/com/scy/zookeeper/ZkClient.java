@@ -1,5 +1,6 @@
 package com.scy.zookeeper;
 
+import com.scy.core.CollectionUtil;
 import com.scy.core.StringUtil;
 import com.scy.core.format.MessageUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -108,6 +110,21 @@ public class ZkClient {
         } catch (Exception e) {
             log.error(MessageUtil.format("doGetContent error", e, "path", path));
             return StringUtil.EMPTY;
+        }
+    }
+
+    /**
+     * 查询子节点
+     */
+    public List<String> getChildren(String path) {
+        try {
+            return curatorFramework.getChildren().forPath(path);
+        } catch (KeeperException.NoNodeException e) {
+            log.warn(MessageUtil.format("getChildren path不存在", "path", path));
+            return CollectionUtil.emptyList();
+        } catch (Exception e) {
+            log.error(MessageUtil.format("getChildren error", e, "path", path));
+            return CollectionUtil.emptyList();
         }
     }
 }

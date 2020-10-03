@@ -127,4 +127,22 @@ public class ZkClient {
             return CollectionUtil.emptyList();
         }
     }
+
+    /**
+     * 删除节点(同时删除子节点)
+     *
+     * @return true 删除成功
+     */
+    public boolean delete(String path) {
+        try {
+            curatorFramework.delete().guaranteed().deletingChildrenIfNeeded().forPath(path);
+            return Boolean.TRUE;
+        } catch (KeeperException.NoNodeException e) {
+            log.warn(MessageUtil.format("delete path不存在", "path", path));
+            return Boolean.FALSE;
+        } catch (Exception e) {
+            log.error(MessageUtil.format("delete error", e, "path", path));
+            return Boolean.FALSE;
+        }
+    }
 }

@@ -62,4 +62,19 @@ public class ZkClient {
             return null;
         }
     }
+
+    /**
+     * 创建节点并赋值(可用于更新节点)
+     */
+    public String createNodeWithData(String path, String data, CreateMode createMode) {
+        try {
+            byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
+            String createPath = curatorFramework.create().orSetData().creatingParentContainersIfNeeded().withMode(createMode).forPath(path, dataBytes);
+            log.info(MessageUtil.format("createNodeWithData success", "createPath", createPath));
+            return createPath;
+        } catch (Exception e) {
+            log.error(MessageUtil.format("createNodeWithData error", e, "path", path, "data", data));
+            return null;
+        }
+    }
 }

@@ -5,7 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -16,8 +19,6 @@ import java.util.concurrent.CountDownLatch;
  */
 @Slf4j
 public class ZkClient {
-
-    private volatile static ZkClient zkClient;
 
     private final CuratorFramework curatorFramework;
 
@@ -41,6 +42,24 @@ public class ZkClient {
             CONNECTED_SEMAPHORE.await();
         } catch (InterruptedException e) {
             log.warn("zkClient init interrupted");
+        }
+    }
+
+    /**
+     * 创建节点(若节点存在则创建失败, 不可用于更新节点)
+     */
+    public String createNode(String path, String data, CreateMode createMode) {
+        try {
+            byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
+            String createPath = curatorFramework.create().creatingParentContainersIfNeeded().withMode(createMode).forPath(path, dataBytes);
+            log.info(MessageUtil.format("createNode success", "createPath", createPath));
+            return createPath;
+        } catch (KeeperException.NodeExistsException e) {
+            log.warn(MessageUtil.format("createNode fail, path已存在", "path", path));
+            return null;
+        } catch (Exception e) {
+            log.error(MessageUtil.format("createNode error", e, "path", path, "data", data));
+            return null;
         }
     }
 }

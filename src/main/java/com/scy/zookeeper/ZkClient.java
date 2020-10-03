@@ -89,7 +89,7 @@ public class ZkClient {
                 return Boolean.TRUE;
             }
         } catch (Exception e) {
-            log.error(MessageUtil.format(("checkExists error", e, "path", path));
+            log.error(MessageUtil.format("checkExists error", e, "path", path));
         }
         return Boolean.FALSE;
     }

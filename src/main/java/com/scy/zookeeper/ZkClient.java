@@ -1,5 +1,6 @@
 package com.scy.zookeeper;
 
+import com.scy.core.StringUtil;
 import com.scy.core.format.MessageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
@@ -92,5 +93,21 @@ public class ZkClient {
             log.error(MessageUtil.format("checkExists error", e, "path", path));
         }
         return Boolean.FALSE;
+    }
+
+    /**
+     * 查询节点数据
+     */
+    public String doGetContent(String path) {
+        try {
+            byte[] dataBytes = curatorFramework.getData().forPath(path);
+            return dataBytes == null ? StringUtil.EMPTY : new String(dataBytes, StandardCharsets.UTF_8);
+        } catch (KeeperException.NoNodeException e) {
+            log.warn(MessageUtil.format("doGetContent 节点不存在", "path", path));
+            return StringUtil.EMPTY;
+        } catch (Exception e) {
+            log.error(MessageUtil.format("doGetContent error", e, "path", path));
+            return StringUtil.EMPTY;
+        }
     }
 }

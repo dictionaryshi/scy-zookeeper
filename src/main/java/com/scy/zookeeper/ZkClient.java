@@ -77,4 +77,20 @@ public class ZkClient {
             return null;
         }
     }
+
+    /**
+     * 判断path是否已创建
+     *
+     * @return true 已创建
+     */
+    public boolean checkExists(String path) {
+        try {
+            if (curatorFramework.checkExists().forPath(path) != null) {
+                return Boolean.TRUE;
+            }
+        } catch (Exception e) {
+            log.error(MessageUtil.format(("checkExists error", e, "path", path));
+        }
+        return Boolean.FALSE;
+    }
 }

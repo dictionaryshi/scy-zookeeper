@@ -3,16 +3,22 @@ package com.scy.zookeeper;
 import com.scy.core.CollectionUtil;
 import com.scy.core.StringUtil;
 import com.scy.core.format.MessageUtil;
+import com.scy.zookeeper.listener.CuratorListener;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.CuratorCache;
 import org.apache.curator.retry.RetryNTimes;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 
 /**
  * ZkClient
@@ -26,6 +32,8 @@ public class ZkClient {
     private final CuratorFramework curatorFramework;
 
     private static final CountDownLatch CONNECTED_SEMAPHORE = new CountDownLatch(1);
+
+    private final Map<CuratorListener, CuratorCache> curatorCacheMap = new ConcurrentHashMap<>();
 
     public ZkClient(String namespace) {
         CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory.builder()
@@ -144,5 +152,28 @@ public class ZkClient {
             log.error(MessageUtil.format("delete error", e, "path", path));
             return Boolean.FALSE;
         }
+    }
+
+    /**
+     * 添加监听
+     */
+    public void addListener(String path, CuratorListener listener, Executor executor) {
+        CuratorCache curatorCache = CuratorCache.build(curatorFramework, path);
+        curatorCacheMap.putIfAbsent(listener, curatorCache);
+        curatorCache.listenable().addListener(listener, executor);
+        curatorCache.start();
+    }
+
+    /**
+     * 删除监听
+     */
+    public void removeListener(CuratorListener listener) {
+        CuratorCache curatorCache = curatorCacheMap.get(listener);
+        if (Objects.isNull(curatorCache)) {
+            return;
+        }
+        curatorCache.listenable().removeListener(listener);
+        curatorCache.close();
+        curatorCacheMap.remove(listener);
     }
 }

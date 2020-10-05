@@ -176,4 +176,27 @@ public class ZkClient {
         curatorCache.close();
         curatorCacheMap.remove(listener);
     }
+
+    /**
+     * 获取子节点并给path添加监听
+     */
+    public List<String> getChildrenAndAddListener(String path, CuratorListener listener) {
+        try {
+            return curatorFramework.getChildren().usingWatcher(listener).forPath(path);
+        } catch (KeeperException.NoNodeException e) {
+            log.warn(MessageUtil.format("getChildrenAndAddListener node不存在", "path", path));
+            return CollectionUtil.emptyList();
+        } catch (Exception e) {
+            log.error(MessageUtil.format("getChildrenAndAddListener error", e, "path", path));
+            return CollectionUtil.emptyList();
+        }
+    }
+
+    /**
+     * 关闭客户端
+     */
+    public void close() {
+        curatorCacheMap.values().forEach(CuratorCache::close);
+        curatorFramework.close();
+    }
 }

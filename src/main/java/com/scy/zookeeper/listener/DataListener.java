@@ -1,5 +1,7 @@
 package com.scy.zookeeper.listener;
 
+import java.util.List;
+
 /**
  * DataListener
  *
@@ -34,5 +36,13 @@ public interface DataListener {
      * @param data 节点数据
      */
     default void delete(String path, String data) {
+    }
+
+    /**
+     * 子节点发生改变
+     *
+     * @param children 子节点
+     */
+    default void childrenChange(List<String> children) {
     }
 }

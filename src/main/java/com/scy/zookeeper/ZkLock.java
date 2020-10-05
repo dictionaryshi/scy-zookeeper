@@ -2,7 +2,6 @@ package com.scy.zookeeper;
 
 import com.scy.core.ObjectUtil;
 import com.scy.core.StringUtil;
-import com.scy.core.UUIDUtil;
 import com.scy.core.format.MessageUtil;
 import com.scy.core.thread.ThreadLocalUtil;
 import com.scy.zookeeper.listener.CuratorListener;
@@ -40,8 +39,8 @@ public class ZkLock {
         this.executor = executor;
     }
 
-    public void lock() {
-        String path = LOCK_BASE_PATH + UUIDUtil.uuid();
+    public void lock(String key) {
+        String path = LOCK_BASE_PATH + key;
 
         ThreadLocalUtil.put(ZK_LOCK_PATH, path);
 
@@ -87,8 +86,12 @@ public class ZkLock {
 
     public void unlock() {
         this.countDownLatch = null;
+
         String lockPath = (String) ThreadLocalUtil.get(ZK_LOCK_PATH);
         zkClient.delete(lockPath);
-        zkClient.removeListener(this.curatorListener);
+
+        if (!ObjectUtil.isNull(this.curatorListener)) {
+            zkClient.removeListener(this.curatorListener);
+        }
     }
 }

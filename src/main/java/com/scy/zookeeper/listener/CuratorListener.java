@@ -1,9 +1,16 @@
 package com.scy.zookeeper.listener;
 
+import com.scy.core.CollectionUtil;
+import com.scy.core.StringUtil;
+import com.scy.zookeeper.ZkClient;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import org.apache.curator.framework.api.CuratorWatcher;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
+import org.apache.zookeeper.WatchedEvent;
+
+import java.util.List;
 
 /**
  * CuratorListener
@@ -13,7 +20,9 @@ import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
  */
 @EqualsAndHashCode
 @AllArgsConstructor
-public class CuratorListener implements CuratorCacheListener {
+public class CuratorListener implements CuratorCacheListener, CuratorWatcher {
+
+    private final ZkClient zkClient;
 
     private final DataListener dataListener;
 
@@ -36,5 +45,18 @@ public class CuratorListener implements CuratorCacheListener {
                 break;
             }
         }
+    }
+
+    @Override
+    public void process(WatchedEvent event) throws Exception {
+        String path = event.getPath();
+        if (StringUtil.isEmpty(path)) {
+            return;
+        }
+        List<String> children = zkClient.getChildrenAndAddListener(path, this);
+        if (CollectionUtil.isEmpty(children)) {
+            return;
+        }
+        dataListener.childrenChange(children);
     }
 }

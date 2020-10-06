@@ -6,6 +6,7 @@ import com.scy.zookeeper.ZkClient;
 import org.springframework.context.annotation.Bean;
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * ZookeeperConfig
@@ -29,5 +30,15 @@ public class ZookeeperConfig {
     @Bean(initMethod = "init")
     public SystemTimeMonitor systemTimeMonitor(ZkClient zkClient, ScheduledThreadPoolExecutor zookeeperScheduledThreadPoolExecutor) {
         return new SystemTimeMonitor(zkClient, zookeeperScheduledThreadPoolExecutor);
+    }
+
+    @Bean
+    public ThreadPoolExecutor dynamicConfigThreadPoolExecutor() {
+        return ThreadPoolUtil.getThreadPool("dynamicConfig", 1, 1, 10);
+    }
+
+    @Bean(initMethod = "init")
+    public DynamicConfiguration dynamicConfiguration(ZkClient zkClient, ThreadPoolExecutor dynamicConfigThreadPoolExecutor) {
+        return new DynamicConfiguration(zkClient, dynamicConfigThreadPoolExecutor);
     }
 }

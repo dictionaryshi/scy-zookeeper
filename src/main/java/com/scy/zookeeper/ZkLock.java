@@ -2,6 +2,7 @@ package com.scy.zookeeper;
 
 import com.scy.core.ObjectUtil;
 import com.scy.core.StringUtil;
+import com.scy.core.format.DateUtil;
 import com.scy.core.format.MessageUtil;
 import com.scy.core.thread.ThreadLocalUtil;
 import com.scy.zookeeper.listener.CuratorListener;
@@ -44,7 +45,7 @@ public class ZkLock {
 
         ThreadLocalUtil.put(ZK_LOCK_PATH, path);
 
-        String lockNode = zkClient.createNode(path, "", CreateMode.EPHEMERAL);
+        String lockNode = zkClient.createNode(path, DateUtil.getCurrentDateStr(), CreateMode.EPHEMERAL);
         if (!StringUtil.isEmpty(lockNode)) {
             log.info(MessageUtil.format("zk lock success", "path", path));
             return;
@@ -69,7 +70,7 @@ public class ZkLock {
 
         while (true) {
             try {
-                lockNode = zkClient.createNode(path, "", CreateMode.EPHEMERAL);
+                lockNode = zkClient.createNode(path, DateUtil.getCurrentDateStr(), CreateMode.EPHEMERAL);
                 if (!StringUtil.isEmpty(lockNode)) {
                     log.info(MessageUtil.format("zk lock success", "path", path, "count", count));
                     return;

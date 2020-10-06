@@ -75,7 +75,7 @@ public class ZkLock {
                     log.info(MessageUtil.format("zk lock success", "path", path, "count", count));
                     return;
                 }
-                this.countDownLatch.await(3_000, TimeUnit.MILLISECONDS);
+                this.countDownLatch.await(30_000, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 log.warn(MessageUtil.format("zk lock interrupted", "path", path, "count", count));
             } finally {

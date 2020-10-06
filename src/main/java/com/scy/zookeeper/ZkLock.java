@@ -42,14 +42,7 @@ public class ZkLock {
 
     public void lock(String key) {
         String path = LOCK_BASE_PATH + key;
-
         ThreadLocalUtil.put(ZK_LOCK_PATH, path);
-
-        String lockNode = zkClient.createNode(path, DateUtil.getCurrentDateStr(), CreateMode.EPHEMERAL);
-        if (!StringUtil.isEmpty(lockNode)) {
-            log.info(MessageUtil.format("zk lock success", "path", path));
-            return;
-        }
 
         this.countDownLatch = new CountDownLatch(1);
         this.curatorListener = new CuratorListener(zkClient, new DataListener() {
@@ -66,11 +59,10 @@ public class ZkLock {
         });
         zkClient.addListener(path, curatorListener, executor);
 
-        int count = 2;
-
+        int count = 1;
         while (true) {
             try {
-                lockNode = zkClient.createNode(path, DateUtil.getCurrentDateStr(), CreateMode.EPHEMERAL);
+                String lockNode = zkClient.createNode(path, DateUtil.getCurrentDateStr(), CreateMode.EPHEMERAL);
                 if (!StringUtil.isEmpty(lockNode)) {
                     log.info(MessageUtil.format("zk lock success", "path", path, "count", count));
                     return;

@@ -50,20 +50,22 @@ public class DynamicConfiguration implements BeanPostProcessor {
 
     @Override
     public Object postProcessBeforeInitialization(@NonNull Object bean, @NonNull String beanName) throws BeansException {
+        // 将有@Value注解的field缓存起来
         ReflectionsUtil.doWithFields(bean.getClass(), field -> VALUE_BEAN_MAP.put(field, bean), field -> !Objects.isNull(AnnotationUtil.findAnnotation(field, Value.class)));
         return bean;
     }
 
     public void init() {
-        String configName = "dynamic_configuration";
-
         // 配置服务数据
         Map<String, Object> dataMap = this.getData();
         if (CollectionUtil.isEmpty(dataMap)) {
             return;
         }
 
+        // 校验数据
         check(dataMap);
+
+        String configName = "dynamic_configuration";
 
         ApplicationContextUtil.addLastMapPropertySource(configName, dataMap);
 
@@ -126,6 +128,9 @@ public class DynamicConfiguration implements BeanPostProcessor {
         }));
     }
 
+    /**
+     * 获取配置服务数据
+     */
     private Map<String, Object> getData() {
         String path = APPLICATION_CONFIG_PATH;
         List<String> children = zkClient.getChildren(path);

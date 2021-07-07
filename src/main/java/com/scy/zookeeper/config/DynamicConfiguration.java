@@ -82,6 +82,8 @@ public class DynamicConfiguration implements BeanPostProcessor {
 
         ApplicationContextUtil.addLastMapPropertySource(configName, dataMap);
 
+        updateData(dataMap);
+
         addListener(configName);
     }
 
@@ -145,64 +147,64 @@ public class DynamicConfiguration implements BeanPostProcessor {
             @Override
             public void update(String updatePath, String oldData, String newData) {
                 if (!ObjectUtil.equals(updatePath, path) && updatePath.startsWith(path)) {
-                    this.update(configName);
+                    Map<String, Object> dataMap = getData();
+                    if (CollectionUtil.isEmpty(dataMap)) {
+                        return;
+                    }
+                    ApplicationContextUtil.replaceMapPropertySource(configName, dataMap);
+
+                    updateData(dataMap);
                 }
-            }
-
-            private void update(String configName) {
-                Map<String, Object> dataMap = getData();
-                if (CollectionUtil.isEmpty(dataMap)) {
-                    return;
-                }
-                ApplicationContextUtil.replaceMapPropertySource(configName, dataMap);
-
-                VALUE_BEAN_MAP.forEach((field, bean) -> {
-                    Value valueAnnotation = AnnotationUtil.findAnnotation(field, Value.class);
-                    if (ObjectUtil.isNull(valueAnnotation)) {
-                        return;
-                    }
-
-                    String key = valueAnnotation.value();
-                    String valueKey = StringUtil.parseSpringValue(key);
-                    if (StringUtil.isEmpty(valueKey)) {
-                        return;
-                    }
-
-                    Object value = dataMap.get(valueKey);
-                    if (ObjectUtil.isNull(value)) {
-                        return;
-                    }
-
-                    try {
-                        field.setAccessible(Boolean.TRUE);
-                        field.set(bean, value);
-                    } catch (Exception e) {
-                        log.error(MessageUtil.format("动态更新配置error", e, "bean", bean.getClass().getName(), "field", field.getName()));
-                    }
-                });
-
-                CollectionUtil.emptyIfNull(DynamicConfiguration.FIELDS).forEach(field -> {
-                    ConfigCenter configCenter = AnnotationUtil.findAnnotation(field, ConfigCenter.class);
-                    if (ObjectUtil.isNull(configCenter)) {
-                        return;
-                    }
-
-                    String valueKey = configCenter.key();
-                    Object value = dataMap.get(valueKey);
-                    if (ObjectUtil.isNull(value)) {
-                        return;
-                    }
-
-                    try {
-                        field.setAccessible(Boolean.TRUE);
-                        field.set(null, JsonUtil.json2Object((String) value, field.getType()));
-                    } catch (Exception e) {
-                        log.error(MessageUtil.format("动态更新配置error", e, "class", field.getDeclaringClass(), "field", field.getName()));
-                    }
-                });
             }
         });
         zkClient.addListener(path, curatorListener, executor);
+    }
+
+    public static void updateData(Map<String, Object> dataMap) {
+        VALUE_BEAN_MAP.forEach((field, bean) -> {
+            Value valueAnnotation = AnnotationUtil.findAnnotation(field, Value.class);
+            if (ObjectUtil.isNull(valueAnnotation)) {
+                return;
+            }
+
+            String key = valueAnnotation.value();
+            String valueKey = StringUtil.parseSpringValue(key);
+            if (StringUtil.isEmpty(valueKey)) {
+                return;
+            }
+
+            Object value = dataMap.get(valueKey);
+            if (ObjectUtil.isNull(value)) {
+                return;
+            }
+
+            try {
+                field.setAccessible(Boolean.TRUE);
+                field.set(bean, value);
+            } catch (Exception e) {
+                log.error(MessageUtil.format("动态更新配置error", e, "bean", bean.getClass().getName(), "field", field.getName()));
+            }
+        });
+
+        CollectionUtil.emptyIfNull(DynamicConfiguration.FIELDS).forEach(field -> {
+            ConfigCenter configCenter = AnnotationUtil.findAnnotation(field, ConfigCenter.class);
+            if (ObjectUtil.isNull(configCenter)) {
+                return;
+            }
+
+            String valueKey = configCenter.key();
+            Object value = dataMap.get(valueKey);
+            if (ObjectUtil.isNull(value)) {
+                return;
+            }
+
+            try {
+                field.setAccessible(Boolean.TRUE);
+                field.set(null, JsonUtil.json2Object((String) value, field.getType()));
+            } catch (Exception e) {
+                log.error(MessageUtil.format("动态更新配置error", e, "class", field.getDeclaringClass(), "field", field.getName()));
+            }
+        });
     }
 
     private void check(Map<String, Object> dataMap) {

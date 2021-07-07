@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * ---------------------------------------
  * Desc    : 配置中心
  */
-@Target(ElementType.METHOD)
+@Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ConfigCenter {
 

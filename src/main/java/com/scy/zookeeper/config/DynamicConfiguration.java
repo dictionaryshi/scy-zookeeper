@@ -134,7 +134,7 @@ public class DynamicConfiguration implements BeanPostProcessor {
         }));
 
         writeMap.forEach((key, value) -> {
-            String result = zkClient.createNode(APPLICATION_CONFIG_PATH + IOUtil.DIR_SEPARATOR_UNIX + key, ObjectUtil.obj2Str(value), CreateMode.EPHEMERAL);
+            String result = zkClient.createNode(APPLICATION_CONFIG_PATH + IOUtil.DIR_SEPARATOR_UNIX + key, ObjectUtil.obj2Str(value), CreateMode.PERSISTENT);
             log.info("writeData key=>{}, value=>{}, result=>{}", key, ObjectUtil.obj2Str(value), result);
         });
     }

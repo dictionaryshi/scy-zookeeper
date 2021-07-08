@@ -75,13 +75,11 @@ public class DynamicConfiguration implements BeanPostProcessor {
             return;
         }
 
-        // 校验数据
-        check(dataMap);
-
         String configName = "dynamic_configuration";
 
+        // 校验数据
+        check(dataMap);
         ApplicationContextUtil.addLastMapPropertySource(configName, dataMap);
-
         updateData(dataMap);
 
         addListener(configName);
@@ -151,8 +149,10 @@ public class DynamicConfiguration implements BeanPostProcessor {
                     if (CollectionUtil.isEmpty(dataMap)) {
                         return;
                     }
-                    ApplicationContextUtil.replaceMapPropertySource(configName, dataMap);
 
+                    // 校验数据
+                    check(dataMap);
+                    ApplicationContextUtil.replaceMapPropertySource(configName, dataMap);
                     updateData(dataMap);
                 }
             }

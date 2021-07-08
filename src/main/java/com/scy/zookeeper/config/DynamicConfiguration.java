@@ -196,9 +196,14 @@ public class DynamicConfiguration implements BeanPostProcessor {
                 return;
             }
 
+            Object result = JsonUtil.json2Object((String) value, field.getType());
+            if (Objects.isNull(result)) {
+                return;
+            }
+
             try {
                 field.setAccessible(Boolean.TRUE);
-                field.set(null, JsonUtil.json2Object((String) value, field.getType()));
+                field.set(null, result);
             } catch (Exception e) {
                 log.error(MessageUtil.format("动态更新配置error", e, "class", field.getDeclaringClass(), "field", field.getName()));
             }

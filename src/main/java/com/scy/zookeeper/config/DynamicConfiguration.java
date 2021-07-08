@@ -75,13 +75,9 @@ public class DynamicConfiguration implements BeanPostProcessor {
             return;
         }
 
-        // 校验数据
-        check(dataMap);
-
         String configName = "dynamic_configuration";
 
         ApplicationContextUtil.addLastMapPropertySource(configName, dataMap);
-
         updateData(dataMap);
 
         addListener(configName);
@@ -139,6 +135,7 @@ public class DynamicConfiguration implements BeanPostProcessor {
             String result = zkClient.createNode(APPLICATION_CONFIG_PATH + IOUtil.DIR_SEPARATOR_UNIX + key, ObjectUtil.obj2Str(value), CreateMode.PERSISTENT);
             log.info("writeData key=>{}, value=>{}, result=>{}", key, ObjectUtil.obj2Str(value), result);
         });
+        updateData(writeMap);
     }
 
     private void addListener(String configName) {
@@ -151,8 +148,8 @@ public class DynamicConfiguration implements BeanPostProcessor {
                     if (CollectionUtil.isEmpty(dataMap)) {
                         return;
                     }
-                    ApplicationContextUtil.replaceMapPropertySource(configName, dataMap);
 
+                    ApplicationContextUtil.replaceMapPropertySource(configName, dataMap);
                     updateData(dataMap);
                 }
             }
@@ -161,6 +158,9 @@ public class DynamicConfiguration implements BeanPostProcessor {
     }
 
     public static void updateData(Map<String, Object> dataMap) {
+        // 校验数据
+        check(dataMap);
+
         VALUE_BEAN_MAP.forEach((field, bean) -> {
             Value valueAnnotation = AnnotationUtil.findAnnotation(field, Value.class);
             if (ObjectUtil.isNull(valueAnnotation)) {
@@ -207,7 +207,7 @@ public class DynamicConfiguration implements BeanPostProcessor {
         });
     }
 
-    private void check(Map<String, Object> dataMap) {
+    private static void check(Map<String, Object> dataMap) {
         MutablePropertySources propertySources = ApplicationContextUtil.getMutablePropertySources();
         propertySources.stream().forEach(propertySource -> dataMap.keySet().forEach(key -> {
             boolean isExist = propertySource.containsProperty(key);

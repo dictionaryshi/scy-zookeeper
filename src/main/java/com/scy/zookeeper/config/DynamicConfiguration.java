@@ -150,8 +150,6 @@ public class DynamicConfiguration implements BeanPostProcessor {
                         return;
                     }
 
-                    // 校验数据
-                    check(dataMap);
                     ApplicationContextUtil.replaceMapPropertySource(configName, dataMap);
                     updateData(dataMap);
                 }

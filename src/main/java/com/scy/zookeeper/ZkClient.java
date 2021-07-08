@@ -66,7 +66,7 @@ public class ZkClient {
             log.info(MessageUtil.format("createNode success", "createPath", createPath));
             return createPath;
         } catch (KeeperException.NodeExistsException e) {
-            log.warn(MessageUtil.format("createNode fail, path已存在", "path", path));
+            log.info(MessageUtil.format("createNode fail, path已存在", "path", path));
             return null;
         } catch (Exception e) {
             log.error(MessageUtil.format("createNode error", e, "path", path, "data", data));

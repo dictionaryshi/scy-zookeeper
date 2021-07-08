@@ -77,6 +77,8 @@ public class DynamicConfiguration implements BeanPostProcessor {
 
         String configName = "dynamic_configuration";
 
+        // 校验数据
+        check(dataMap);
         ApplicationContextUtil.addLastMapPropertySource(configName, dataMap);
         updateData(dataMap);
 
@@ -148,6 +150,8 @@ public class DynamicConfiguration implements BeanPostProcessor {
                         return;
                     }
 
+                    // 校验数据
+                    check(dataMap);
                     ApplicationContextUtil.replaceMapPropertySource(configName, dataMap);
                     updateData(dataMap);
                 }
@@ -157,9 +161,6 @@ public class DynamicConfiguration implements BeanPostProcessor {
     }
 
     public static void updateData(Map<String, Object> dataMap) {
-        // 校验数据
-        check(dataMap);
-
         VALUE_BEAN_MAP.forEach((field, bean) -> {
             Value valueAnnotation = AnnotationUtil.findAnnotation(field, Value.class);
             if (ObjectUtil.isNull(valueAnnotation)) {
@@ -206,7 +207,7 @@ public class DynamicConfiguration implements BeanPostProcessor {
         });
     }
 
-    private static void check(Map<String, Object> dataMap) {
+    private void check(Map<String, Object> dataMap) {
         MutablePropertySources propertySources = ApplicationContextUtil.getMutablePropertySources();
         propertySources.stream().forEach(propertySource -> dataMap.keySet().forEach(key -> {
             boolean isExist = propertySource.containsProperty(key);

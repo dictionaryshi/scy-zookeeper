@@ -1,9 +1,6 @@
 package com.scy.zookeeper.annotation;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * @author : shichunyang
@@ -12,6 +9,7 @@ import java.lang.annotation.Target;
  * ---------------------------------------
  * Desc    : 配置中心
  */
+@Inherited
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ConfigCenter {

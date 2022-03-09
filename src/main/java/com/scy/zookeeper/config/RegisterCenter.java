@@ -1,6 +1,9 @@
 package com.scy.zookeeper.config;
 
+import com.scy.core.thread.ThreadPoolUtil;
 import com.scy.zookeeper.ZkClient;
+import com.scy.zookeeper.listener.CuratorListener;
+import com.scy.zookeeper.listener.DataListener;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -27,15 +30,38 @@ public class RegisterCenter {
 
     private volatile ConcurrentMap<String, TreeSet<String>> discoveryData = new ConcurrentHashMap<>();
 
-    private String envPath;
-
     private final ZkClient zkClient;
 
-    public RegisterCenter(ZkClient zkClient) {
+    private String env;
+
+    private String envPath;
+
+    public RegisterCenter(ZkClient zkClient, String env) {
         this.zkClient = zkClient;
+        this.env = env;
+
+        envPath = BASE_PATH.concat("/").concat(env);
     }
 
     public String serviceKeyToPath(String serviceKey) {
         return envPath + "/" + serviceKey;
+    }
+
+    public void init() {
+        CuratorListener curatorListener = new CuratorListener(zkClient, new DataListener() {
+
+            @Override
+            public void add(String path, String data) {
+            }
+
+            @Override
+            public void update(String path, String oldData, String newData) {
+            }
+
+            @Override
+            public void delete(String path, String data) {
+            }
+        });
+        zkClient.addListener(envPath, curatorListener, ThreadPoolUtil.getThreadPool("registerCenter-pool", 10, 10, 1024));
     }
 }

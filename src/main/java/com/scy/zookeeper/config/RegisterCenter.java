@@ -1,6 +1,7 @@
 package com.scy.zookeeper.config;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.Maps;
 import com.scy.core.ArrayUtil;
 import com.scy.core.CollectionUtil;
 import com.scy.core.ObjectUtil;
@@ -15,6 +16,7 @@ import com.scy.zookeeper.model.RegisterCenterData;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.zookeeper.CreateMode;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -146,5 +148,78 @@ public class RegisterCenter {
 
             discoveryData.put(serviceKey, addressSet);
         });
+    }
+
+    public boolean registry(Set<String> serviceKeys, String address) {
+        if (CollectionUtil.isEmpty(serviceKeys) || StringUtil.isEmpty(address)) {
+            return Boolean.FALSE;
+        }
+
+        serviceKeys.forEach(serviceKey -> {
+            TreeSet<String> addressSet = registryData.computeIfAbsent(serviceKey, key -> new TreeSet<>());
+            addressSet.add(address);
+
+            registry(serviceKey, addressSet);
+        });
+
+        return Boolean.TRUE;
+    }
+
+    public void refreshRegistryData() {
+        registryData.forEach(this::registry);
+    }
+
+    private void registry(String serviceKey, TreeSet<String> addressSet) {
+        if (StringUtil.isEmpty(serviceKey) || CollectionUtil.isEmpty(addressSet)) {
+            return;
+        }
+
+        addressSet.forEach(address -> {
+            String path = serviceKeyToPath(serviceKey) + "/" + address;
+
+            AddressDataBO addressDataBO = new AddressDataBO();
+            addressDataBO.setEnable(Boolean.TRUE);
+            zkClient.createNode(path, JsonUtil.object2Json(addressDataBO), CreateMode.EPHEMERAL);
+        });
+    }
+
+    public boolean remove(Set<String> serviceKeys, String address) {
+        serviceKeys.forEach(serviceKey -> {
+            TreeSet<String> addressSet = discoveryData.get(serviceKey);
+            if (!CollectionUtil.isEmpty(addressSet)) {
+                addressSet.remove(address);
+            }
+
+            String path = serviceKeyToPath(serviceKey) + "/" + address;
+            zkClient.delete(path);
+        });
+        return Boolean.TRUE;
+    }
+
+    public Map<String, TreeSet<String>> discovery(Set<String> serviceKeys) {
+        if (CollectionUtil.isEmpty(serviceKeys)) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, TreeSet<String>> registryDataMap = Maps.newHashMap();
+        serviceKeys.forEach(serviceKey -> {
+            TreeSet<String> addressSet = discovery(serviceKey);
+            if (!CollectionUtil.isEmpty(addressSet)) {
+                registryDataMap.put(serviceKey, addressSet);
+            }
+        });
+
+        return registryDataMap;
+    }
+
+    public TreeSet<String> discovery(String serviceKey) {
+        TreeSet<String> addressSet = discoveryData.get(serviceKey);
+        if (CollectionUtil.isEmpty(addressSet)) {
+            refreshDiscoveryData(serviceKey);
+
+            addressSet = discoveryData.get(serviceKey);
+        }
+
+        return addressSet;
     }
 }

@@ -15,6 +15,7 @@ import com.scy.zookeeper.model.RegisterCenterData;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.zookeeper.CreateMode;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -145,6 +146,40 @@ public class RegisterCenter {
             }
 
             discoveryData.put(serviceKey, addressSet);
+        });
+    }
+
+    public boolean registry(Set<String> serviceKeys, String address) {
+        if (CollectionUtil.isEmpty(serviceKeys) || StringUtil.isEmpty(address)) {
+            return Boolean.FALSE;
+        }
+
+        serviceKeys.forEach(serviceKey -> {
+            TreeSet<String> addressSet = registryData.computeIfAbsent(serviceKey, key -> new TreeSet<>());
+            addressSet.add(address);
+
+            registry(serviceKey, addressSet);
+        });
+
+
+        return Boolean.TRUE;
+    }
+
+    public void refreshRegistryData() {
+        registryData.forEach(this::registry);
+    }
+
+    private void registry(String serviceKey, TreeSet<String> addressSet) {
+        if (StringUtil.isEmpty(serviceKey) || CollectionUtil.isEmpty(addressSet)) {
+            return;
+        }
+
+        addressSet.forEach(address -> {
+            String path = serviceKeyToPath(serviceKey) + "/" + address;
+
+            AddressDataBO addressDataBO = new AddressDataBO();
+            addressDataBO.setEnable(Boolean.TRUE);
+            zkClient.createNode(path, JsonUtil.object2Json(addressDataBO), CreateMode.EPHEMERAL);
         });
     }
 }

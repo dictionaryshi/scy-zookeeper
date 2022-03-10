@@ -1,6 +1,7 @@
 package com.scy.zookeeper.config;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.Maps;
 import com.scy.core.ArrayUtil;
 import com.scy.core.CollectionUtil;
 import com.scy.core.ObjectUtil;
@@ -181,5 +182,45 @@ public class RegisterCenter {
             addressDataBO.setEnable(Boolean.TRUE);
             zkClient.createNode(path, JsonUtil.object2Json(addressDataBO), CreateMode.EPHEMERAL);
         });
+    }
+
+    public boolean remove(Set<String> serviceKeys, String address) {
+        serviceKeys.forEach(serviceKey -> {
+            TreeSet<String> addressSet = discoveryData.get(serviceKey);
+            if (!ObjectUtil.isNull(addressSet)) {
+                addressSet.remove(address);
+            }
+
+            String path = serviceKeyToPath(serviceKey) + "/" + address;
+            zkClient.delete(path);
+        });
+        return Boolean.TRUE;
+    }
+
+    public Map<String, TreeSet<String>> discovery(Set<String> serviceKeys) {
+        if (CollectionUtil.isEmpty(serviceKeys)) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, TreeSet<String>> registryDataMap = Maps.newHashMap();
+        serviceKeys.forEach(serviceKey -> {
+            TreeSet<String> addressSet = discovery(serviceKey);
+            if (!CollectionUtil.isEmpty(addressSet)) {
+                registryDataMap.put(serviceKey, addressSet);
+            }
+        });
+
+        return registryDataMap;
+    }
+
+    public TreeSet<String> discovery(String serviceKey) {
+        TreeSet<String> addressSet = discoveryData.get(serviceKey);
+        if (ObjectUtil.isNull(addressSet)) {
+            refreshDiscoveryData(serviceKey);
+
+            addressSet = discoveryData.get(serviceKey);
+        }
+
+        return addressSet;
     }
 }

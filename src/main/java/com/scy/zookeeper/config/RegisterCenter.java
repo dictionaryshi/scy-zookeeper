@@ -162,7 +162,6 @@ public class RegisterCenter {
             registry(serviceKey, addressSet);
         });
 
-
         return Boolean.TRUE;
     }
 
@@ -187,7 +186,7 @@ public class RegisterCenter {
     public boolean remove(Set<String> serviceKeys, String address) {
         serviceKeys.forEach(serviceKey -> {
             TreeSet<String> addressSet = discoveryData.get(serviceKey);
-            if (!ObjectUtil.isNull(addressSet)) {
+            if (!CollectionUtil.isEmpty(addressSet)) {
                 addressSet.remove(address);
             }
 
@@ -215,7 +214,7 @@ public class RegisterCenter {
 
     public TreeSet<String> discovery(String serviceKey) {
         TreeSet<String> addressSet = discoveryData.get(serviceKey);
-        if (ObjectUtil.isNull(addressSet)) {
+        if (CollectionUtil.isEmpty(addressSet)) {
             refreshDiscoveryData(serviceKey);
 
             addressSet = discoveryData.get(serviceKey);

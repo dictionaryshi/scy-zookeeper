@@ -1,20 +1,22 @@
 package com.scy.zookeeper.config;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.scy.core.ArrayUtil;
 import com.scy.core.CollectionUtil;
 import com.scy.core.ObjectUtil;
 import com.scy.core.StringUtil;
+import com.scy.core.json.JsonUtil;
 import com.scy.core.thread.ThreadPoolUtil;
 import com.scy.zookeeper.ZkClient;
 import com.scy.zookeeper.listener.CuratorListener;
 import com.scy.zookeeper.listener.DataListener;
+import com.scy.zookeeper.model.AddressDataBO;
 import com.scy.zookeeper.model.RegisterCenterData;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -35,6 +37,9 @@ public class RegisterCenter {
     private volatile ConcurrentMap<String, TreeSet<String>> registryData = new ConcurrentHashMap<>();
 
     private volatile ConcurrentMap<String, TreeSet<String>> discoveryData = new ConcurrentHashMap<>();
+
+    public static final TypeReference<AddressDataBO> ADDRESS_DATA_TYPE_REFERENCE = new TypeReference<AddressDataBO>() {
+    };
 
     private final ZkClient zkClient;
 
@@ -100,15 +105,46 @@ public class RegisterCenter {
             return;
         }
 
-        String servicePath = serviceKeyToPath(registerCenterData.getServiceKey());
-        List<String> addresses = zkClient.getChildren(servicePath);
-        if (CollectionUtil.isEmpty(addresses)) {
-            return;
+        refreshDiscoveryData(registerCenterData.getServiceKey());
+    }
+
+    private void refreshDiscoveryData(String key) {
+        Set<String> keys = new HashSet<>();
+        if (!StringUtil.isEmpty(key)) {
+            keys.add(key);
+        } else {
+            if (!CollectionUtil.isEmpty(discoveryData)) {
+                keys.addAll(discoveryData.keySet());
+            }
         }
 
-        addresses.forEach(address -> {
-            String addressPath = servicePath + "/" + address;
-            String addressData = zkClient.doGetContent(addressPath);
+        keys.forEach(serviceKey -> {
+            String servicePath = serviceKeyToPath(serviceKey);
+            List<String> addresses = zkClient.getChildren(servicePath);
+            if (CollectionUtil.isEmpty(addresses)) {
+                return;
+            }
+
+            TreeSet<String> addressSet = addresses.stream().filter(address -> {
+                String addressPath = servicePath + "/" + address;
+                String addressData = zkClient.doGetContent(addressPath);
+                if (StringUtil.isEmpty(addressData)) {
+                    return Boolean.FALSE;
+                }
+
+                AddressDataBO addressDataBO = JsonUtil.json2Object(addressData, ADDRESS_DATA_TYPE_REFERENCE);
+                if (ObjectUtil.isNull(addressDataBO) || ObjectUtil.isNull(addressDataBO.getEnable())) {
+                    return Boolean.FALSE;
+                }
+
+                return addressDataBO.getEnable();
+            }).collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
+
+            if (CollectionUtil.isEmpty(addressSet)) {
+                return;
+            }
+
+            discoveryData.put(serviceKey, addressSet);
         });
     }
 }

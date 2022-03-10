@@ -16,11 +16,14 @@ import com.scy.zookeeper.model.RegisterCenterData;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.CreateMode;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author : shichunyang
@@ -29,6 +32,7 @@ import java.util.concurrent.ConcurrentMap;
  * ---------------------------------------
  * Desc    : RegisterCenter
  */
+@Slf4j
 @Getter
 @Setter
 @ToString
@@ -99,6 +103,13 @@ public class RegisterCenter {
             }
         });
         zkClient.addListener(envPath, curatorListener, ThreadPoolUtil.getThreadPool("registerCenter-pool", 10, 10, 1024));
+
+        ScheduledThreadPoolExecutor scheduledPool = ThreadPoolUtil.getScheduledPool("register-scheduled--pool", 5);
+        scheduledPool.scheduleWithFixedDelay(() -> {
+            refreshDiscoveryData(null);
+
+            refreshRegistryData();
+        }, 0, 60, TimeUnit.SECONDS);
     }
 
     private void listener(String path) {

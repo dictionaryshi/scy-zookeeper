@@ -104,7 +104,7 @@ public class RegisterCenter {
         });
         zkClient.addListener(envPath, curatorListener, ThreadPoolUtil.getThreadPool("registerCenter-pool", 10, 10, 1024));
 
-        ScheduledThreadPoolExecutor scheduledPool = ThreadPoolUtil.getScheduledPool("register-scheduled--pool", 5);
+        ScheduledThreadPoolExecutor scheduledPool = ThreadPoolUtil.getScheduledPool("registerCenter-scheduled-pool", 5);
         scheduledPool.scheduleWithFixedDelay(() -> {
             refreshDiscoveryData(null);
 

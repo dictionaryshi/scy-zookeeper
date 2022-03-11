@@ -61,7 +61,7 @@ public class RegisterCenter {
     }
 
     public String serviceKeyToPath(String serviceKey) {
-        return envPath + "/" + serviceKey;
+        return envPath.concat("/").concat(serviceKey);
     }
 
     private RegisterCenterData getRegisterCenterData(String path) {
@@ -139,7 +139,7 @@ public class RegisterCenter {
             }
 
             TreeSet<String> addressSet = addresses.stream().filter(address -> {
-                String addressPath = servicePath + "/" + address;
+                String addressPath = servicePath.concat("/").concat(address);
                 String addressData = zkClient.doGetContent(addressPath);
                 if (StringUtil.isEmpty(addressData)) {
                     return Boolean.FALSE;
@@ -186,7 +186,7 @@ public class RegisterCenter {
         }
 
         addressSet.forEach(address -> {
-            String path = serviceKeyToPath(serviceKey) + "/" + address;
+            String path = serviceKeyToPath(serviceKey).concat("/").concat(address);
 
             AddressDataBO addressDataBO = new AddressDataBO();
             addressDataBO.setEnable(Boolean.TRUE);
@@ -201,7 +201,7 @@ public class RegisterCenter {
                 addressSet.remove(address);
             }
 
-            String path = serviceKeyToPath(serviceKey) + "/" + address;
+            String path = serviceKeyToPath(serviceKey).concat("/").concat(address);
             zkClient.delete(path);
         });
         return Boolean.TRUE;

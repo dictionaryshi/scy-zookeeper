@@ -6,6 +6,7 @@ import com.scy.core.ArrayUtil;
 import com.scy.core.CollectionUtil;
 import com.scy.core.ObjectUtil;
 import com.scy.core.StringUtil;
+import com.scy.core.exception.Try;
 import com.scy.core.json.JsonUtil;
 import com.scy.core.thread.ThreadPoolUtil;
 import com.scy.zookeeper.ZkClient;
@@ -106,9 +107,9 @@ public class RegisterCenter {
 
         ScheduledThreadPoolExecutor scheduledPool = ThreadPoolUtil.getScheduledPool("registerCenter-scheduled-pool", 5);
         scheduledPool.scheduleWithFixedDelay(() -> {
-            refreshDiscoveryData(null);
+            Try.run(() -> refreshDiscoveryData(null));
 
-            refreshRegistryData();
+            Try.run(this::refreshRegistryData);
         }, 0, 60, TimeUnit.SECONDS);
     }
 

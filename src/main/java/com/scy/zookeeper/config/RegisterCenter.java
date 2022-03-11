@@ -6,6 +6,7 @@ import com.scy.core.ArrayUtil;
 import com.scy.core.CollectionUtil;
 import com.scy.core.ObjectUtil;
 import com.scy.core.StringUtil;
+import com.scy.core.exception.Try;
 import com.scy.core.json.JsonUtil;
 import com.scy.core.thread.ThreadPoolUtil;
 import com.scy.zookeeper.ZkClient;
@@ -61,7 +62,7 @@ public class RegisterCenter {
     }
 
     public String serviceKeyToPath(String serviceKey) {
-        return envPath + "/" + serviceKey;
+        return envPath.concat("/").concat(serviceKey);
     }
 
     private RegisterCenterData getRegisterCenterData(String path) {
@@ -106,9 +107,9 @@ public class RegisterCenter {
 
         ScheduledThreadPoolExecutor scheduledPool = ThreadPoolUtil.getScheduledPool("registerCenter-scheduled-pool", 5);
         scheduledPool.scheduleWithFixedDelay(() -> {
-            refreshDiscoveryData(null);
+            Try.run(() -> refreshDiscoveryData(null));
 
-            refreshRegistryData();
+            Try.run(this::refreshRegistryData);
         }, 0, 60, TimeUnit.SECONDS);
     }
 
@@ -139,7 +140,7 @@ public class RegisterCenter {
             }
 
             TreeSet<String> addressSet = addresses.stream().filter(address -> {
-                String addressPath = servicePath + "/" + address;
+                String addressPath = servicePath.concat("/").concat(address);
                 String addressData = zkClient.doGetContent(addressPath);
                 if (StringUtil.isEmpty(addressData)) {
                     return Boolean.FALSE;
@@ -186,7 +187,7 @@ public class RegisterCenter {
         }
 
         addressSet.forEach(address -> {
-            String path = serviceKeyToPath(serviceKey) + "/" + address;
+            String path = serviceKeyToPath(serviceKey).concat("/").concat(address);
 
             AddressDataBO addressDataBO = new AddressDataBO();
             addressDataBO.setEnable(Boolean.TRUE);
@@ -201,7 +202,7 @@ public class RegisterCenter {
                 addressSet.remove(address);
             }
 
-            String path = serviceKeyToPath(serviceKey) + "/" + address;
+            String path = serviceKeyToPath(serviceKey).concat("/").concat(address);
             zkClient.delete(path);
         });
         return Boolean.TRUE;

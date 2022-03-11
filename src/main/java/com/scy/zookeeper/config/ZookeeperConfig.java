@@ -41,4 +41,9 @@ public class ZookeeperConfig {
     public DynamicConfiguration dynamicConfiguration(ZkClient zkClient, ThreadPoolExecutor dynamicConfigThreadPoolExecutor) {
         return new DynamicConfiguration(zkClient, dynamicConfigThreadPoolExecutor);
     }
+
+    @Bean(initMethod = "init")
+    public RegisterCenter registerCenter(ZkClient zkClient) {
+        return new RegisterCenter(zkClient, ApplicationContextUtil.getProperty(ApplicationContextUtil.ACTIVE));
+    }
 }

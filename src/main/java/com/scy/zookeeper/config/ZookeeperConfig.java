@@ -46,4 +46,9 @@ public class ZookeeperConfig {
     public RegisterCenter registerCenter(ZkClient zkClient) {
         return new RegisterCenter(zkClient, ApplicationContextUtil.getProperty(ApplicationContextUtil.ACTIVE));
     }
+
+    @Bean(initMethod = "init")
+    public MqRegister mqRegister(ZkClient zkClient) {
+        return new MqRegister(zkClient, ApplicationContextUtil.getProperty(ApplicationContextUtil.ACTIVE));
+    }
 }

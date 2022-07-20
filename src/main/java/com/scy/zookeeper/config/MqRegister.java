@@ -61,7 +61,7 @@ public class MqRegister {
         registryData.forEach((group, topic) -> registry(group, topic, Boolean.FALSE));
     }
 
-    private void registry(String group, String topic, boolean cache) {
+    public void registry(String group, String topic, boolean cache) {
         if (StringUtil.isEmpty(topic) || StringUtil.isEmpty(group)) {
             return;
         }

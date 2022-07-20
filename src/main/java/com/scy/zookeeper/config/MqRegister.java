@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.CreateMode;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -68,6 +69,8 @@ public class MqRegister {
         String path = topicToPath(topic).concat("/").concat(group);
 
         zkClient.createNode(path, StringUtil.EMPTY, CreateMode.EPHEMERAL);
+
+        registryData.putIfAbsent(topic, group);
     }
 
     public boolean remove(String topic, String group) {

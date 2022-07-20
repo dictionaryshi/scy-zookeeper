@@ -58,10 +58,10 @@ public class MqRegister {
     }
 
     public void refreshRegistryData() {
-        registryData.forEach(this::registry);
+        registryData.forEach((group, topic) -> registry(group, topic, Boolean.FALSE));
     }
 
-    private void registry(String topic, String group) {
+    private void registry(String group, String topic, boolean cache) {
         if (StringUtil.isEmpty(topic) || StringUtil.isEmpty(group)) {
             return;
         }
@@ -70,7 +70,9 @@ public class MqRegister {
 
         zkClient.createNode(path, StringUtil.EMPTY, CreateMode.EPHEMERAL);
 
-        registryData.putIfAbsent(topic, group);
+        if (cache) {
+            registryData.putIfAbsent(group, topic);
+        }
     }
 
     public boolean remove(String topic, String group) {
@@ -83,5 +85,9 @@ public class MqRegister {
     public List<String> discovery(String topic) {
         String topicPath = topicToPath(topic);
         return zkClient.getChildren(topicPath);
+    }
+
+    public void clear() {
+        registryData.clear();
     }
 }
